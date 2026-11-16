@@ -49,14 +49,55 @@ git branch -M main
 git push -u origin main
 ```
 
-> **push 时需要认证**：GitHub 已不允许用账户密码推送，需用以下任一方式：
-> - **图形界面（最省事，推荐新手）**：安装 [GitHub Desktop](https://desktop.github.com/) → 登录 →
->   File → Add Local Repository → 选中 `ielts-cet-site` 文件夹 → 点 **Publish repository**，
->   按提示选 Public 即可，全程不用管 token。
-> - **命令行 + Token**：GitHub 头像 → Settings → Developer settings → Personal access tokens →
->   Tokens (classic) → Generate new token → 勾选 `repo` 权限 → 生成后复制那串 token；
->   在 `git push` 提示输入密码时**粘贴 token**（不是账户密码）。
->   Mac 上可先执行一次 `git config --global credential.helper osxkeychain`，让系统记住凭据。
+> **push 时需要认证**：GitHub 已不允许用账户密码推送。下面「方式一」是命令行的完整图文步骤；
+> 若不想折腾 token，可直接用文末「方式二」图形界面。
+
+#### 方式一：命令行 + Token（完整步骤）
+
+**A. 先生成一个 Token（在 github.com 网页上点）**
+
+1. 登录 GitHub，点**右上角你的头像** → **Settings（设置）**
+2. 左侧栏拉到最底部，找到 **Developer settings（开发者设置）**，点它
+3. 左侧栏 **Personal access tokens** 下 → 点 **Tokens (classic)**
+4. 点右上角 **Generate new token** → **Generate new token (classic)**
+5. 填写三项：
+   - **Note（备注）**：随便写，如 `ielts-site`
+   - **Expiration（有效期）**：选一个，如 `90 days`
+   - **Select scopes（权限）**：**只勾选 `repo`** 这一项（勾选后其子项会自动全选）
+6. 拉到页面最底，点绿色 **Generate token**
+7. 立刻**复制**那串 `ghp_` 开头的字符 —— 页面只显示这一次，关掉就再也看不到了
+
+**B. 在本机终端执行推送**
+
+```bash
+# 1. 打开「终端」App，进入站点目录（路径含中文，用引号包住）
+cd "/Users/ssqin/WorkBuddy/外语能力提升/ielts-cet-site"
+
+# 2. 关联你的远程仓库（把 你的用户名 换成实际用户名）
+git remote add origin https://github.com/你的用户名/ielts-cet.git
+
+# 3. 确保分支名为 main
+git branch -M main
+
+# 4. 推送
+git push -u origin main
+```
+
+- 第 4 步会弹出认证：
+  - **Username**：填你的 GitHub 用户名
+  - **Password**：**粘贴第 A 步拿到的 token**（不是账户密码！粘贴时屏幕不显示字符是正常的，直接按回车）
+- 看到类似 `main -> main` 的输出即成功。
+- Mac 若想只输一次 token、以后免输，推送前先执行：
+  `git config --global credential.helper osxkeychain`
+
+> 若之前执行过 `git remote add` 但地址写错，用下面命令修正再 push：
+> `git remote set-url origin https://github.com/你的用户名/ielts-cet.git`
+
+#### 方式二：图形界面（完全不碰 token）
+
+安装 [GitHub Desktop](https://desktop.github.com/) → 登录 → 菜单 File → **Add Local Repository** →
+选中 `ielts-cet-site` 文件夹 → 点 **Publish repository** → 名字随意、勾选 Public → 发布。
+全程在窗口里点，不用输任何命令。
 
 ### 3. 开启 Pages
 - 进入仓库 → **Settings → Pages**（左侧栏）
