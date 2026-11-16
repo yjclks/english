@@ -5,11 +5,19 @@
 }
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:var(--text);background:var(--bg);}
-/* 顶栏三段式：左（品牌+时钟）· 中（学习总时长）· 右（操作） */
+/* 顶栏三段式：左（品牌+时钟）· 中（模块导航）· 右（学习总时长） */
 .topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
 .topbar-left{display:flex;align-items:center;gap:16px;min-width:0;}
 .brand{font-weight:800;font-size:17px;letter-spacing:1px;white-space:nowrap;}
-.actions{display:flex;align-items:center;gap:10px;justify-self:end;}
+/* 顶部中间：模块导航 */
+.nav-tabs{display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;}
+.nav-tab{border:none;background:transparent;color:var(--muted);font-size:13.5px;padding:6px 18px;border-radius:7px;cursor:pointer;white-space:nowrap;}
+.nav-tab:hover{color:var(--primary);}
+.nav-tab.active{background:#fff;color:var(--primary);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+
+/* 右栏顶部操作按钮 */
+.panel-actions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.panel-actions .btn{padding:6px 10px;font-size:13px;flex:1 1 auto;}
 .btn{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:14px;white-space:nowrap;}
 .btn:hover{border-color:var(--primary);}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
@@ -24,7 +32,7 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .clock{display:flex;align-items:center;gap:8px;white-space:nowrap;}
 .clock-date{font-size:12px;color:var(--muted);}
 .clock-time{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.5px;}
-.timer-box{display:flex;align-items:center;gap:8px;justify-self:center;}
+.timer-box{display:flex;align-items:center;gap:8px;justify-self:end;}
 .timer-label{font-size:12px;color:var(--muted);}
 .timer-value{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--primary);min-width:86px;letter-spacing:.5px;}
 .timer-box.running .timer-value{color:#c0392b;}
@@ -35,8 +43,13 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 @media (max-width:1150px){
   .clock-date{display:none;}
   .timer-label{display:none;}
-  .status{display:none;}
+  .nav-tab{padding:6px 10px;font-size:12.5px;}
 }
+
+/* 独立模块页面（学习记录 / 设置） */
+.standalone-page{height:calc(100vh - 110px);overflow-y:auto;padding:22px 24px;background:var(--bg);}
+.page-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px 26px;box-shadow:0 1px 3px rgba(0,0,0,.04);line-height:1.6;white-space:normal;}
+.page-title{font-size:19px;margin:0 0 20px;font-weight:800;}
 
 .layout{display:grid;grid-template-columns:240px 1fr 320px;gap:0;height:calc(100vh - 110px);}
 .sidebar{border-right:1px solid var(--border);background:var(--panel);overflow-y:auto;padding:12px;}
@@ -108,8 +121,8 @@ canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-
 
 /* 学习记录面板 */
 .stats-box{width:min(860px,94vw);}
-/* modal-body 的 pre-wrap 是给翻译纯文本用的，会把 HTML 缩进渲染成空白行，统计面板要关掉 */
-.stats-box .modal-body{white-space:normal;line-height:1.5;padding:14px 16px;}
+.settings-box{max-width:660px;}
+/* 统计内容已迁入独立页面，不再需要弹层的 pre-wrap 覆盖 */
 .stat-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px;}
 .stat-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;}
 .stat-num{font-size:17px;font-weight:700;color:var(--primary);font-variant-numeric:tabular-nums;white-space:nowrap;}

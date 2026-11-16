@@ -938,8 +938,32 @@
     updateFinishBtn();
   });
 
-  // ---------- 学习记录面板 ----------
-  const statsModal = $("statsModal");
+  // ---------- 模块导航（首页 / 学习记录 / 设置） ----------
+  const PAGE_IDS = { home: "pageHome", stats: "pageStats", settings: "pageSettings" };
+  function showPage(name) {
+    if (!PAGE_IDS[name]) name = "home";
+    Object.values(PAGE_IDS).forEach((id) => document.getElementById(id).classList.add("hidden"));
+    document.getElementById(PAGE_IDS[name]).classList.remove("hidden");
+    document.querySelectorAll(".nav-tab").forEach((t) => t.classList.toggle("active", t.dataset.page === name));
+    if (name === "stats") renderStats();
+    if (name === "settings") fillSettingsForm();
+    // hash 先更新，避免后续任何异常影响 URL 与页面不同步
+    if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
+    // 首页曾被隐藏，切回时强制 PDFViewer 重算尺寸（3.11 无 resize()，用 scale setter 触发）
+    if (name === "home" && pdfViewer) {
+      try {
+        if (typeof pdfViewer.resize === "function") pdfViewer.resize();
+        else pdfViewer.currentScaleValue = pdfViewer.currentScaleValue;
+      } catch (e) { /* 尺寸重算失败不影响页面切换 */ }
+    }
+  }
+  $("navTabs").addEventListener("click", (e) => {
+    const tab = e.target.closest(".nav-tab");
+    if (tab) showPage(tab.dataset.page);
+  });
+  window.addEventListener("hashchange", () => showPage(location.hash.slice(1) || "home"));
+
+  // ---------- 学习记录页面 ----------
   const chartTitleEl = $("chartTitle"), chartEl = $("chart");
   let chartYear = 0, chartMonth = 0; // 当前显示的年/月（1-12）
 
@@ -974,10 +998,6 @@
     return { current, longest };
   }
 
-  async function openStats() {
-    statsModal.classList.remove("hidden");
-    await renderStats();
-  }
   async function renderStats() {
     // 阅读字数 / 篇章数：仅统计用户点过「完成阅读」的文档
     const read = StudyStats.getRead();
@@ -1027,9 +1047,6 @@
         `<div class="bar-day">${showDay ? v.d : ""}</div></div>`;
     }).join("");
   }
-  $("btnStats").addEventListener("click", openStats);
-  $("closeStats").addEventListener("click", () => statsModal.classList.add("hidden"));
-  statsModal.addEventListener("click", (e) => { if (e.target === statsModal) statsModal.classList.add("hidden"); });
   $("chartPrev").addEventListener("click", () => {
     chartMonth -= 1; if (chartMonth < 1) { chartMonth = 12; chartYear -= 1; }
     renderChart();
@@ -1073,9 +1090,6 @@
     "meta-llama/llama-3.1-8b-instruct:free": "openai/gpt-oss-120b:free",
   };
   loadCfg(); // 启动时即触发旧模型名自动迁移（须在 STALE_MODELS 声明之后）
-  const btnSettings = $("btnSettings");
-  const settingsModal = $("settingsModal");
-  const closeSettings = $("closeSettings");
   const setProvider = $("setProvider");
   const setBase = $("setBase");
   const setKey = $("setKey");
@@ -1090,7 +1104,8 @@
   }
   setProvider.addEventListener("change", () => fillPreset(setProvider.value));
 
-  btnSettings.addEventListener("click", () => {
+  // 进入设置页时用本机配置回填表单（原来由弹层入口负责）
+  function fillSettingsForm() {
     const cfg = loadCfg() || {};
     let p = "custom";
     for (const k in LLM_PRESETS) {
@@ -1100,22 +1115,19 @@
     setBase.value = cfg.base || LLM_PRESETS[p].base || "";
     setModel.value = cfg.model || LLM_PRESETS[p].model || "";
     setKey.value = cfg.key || "";
-    settingsModal.classList.remove("hidden");
-  });
-  closeSettings.addEventListener("click", () => settingsModal.classList.add("hidden"));
-  settingsModal.addEventListener("click", (e) => { if (e.target === settingsModal) settingsModal.classList.add("hidden"); });
+  }
   setSave.addEventListener("click", () => {
     const base = setBase.value.trim();
     const key = setKey.value.trim();
     const model = setModel.value.trim();
     if (!base || !key || !model) { alert("请填写 API 地址、Key 和模型名（选了预设会自动填入后两项）"); return; }
     saveCfg({ base, key, model });
-    settingsModal.classList.add("hidden");
+    showPage("home");
     setStatus("AI 语法讲解已配置（仅本机）");
   });
   setClear.addEventListener("click", () => {
     clearCfg();
-    settingsModal.classList.add("hidden");
+    showPage("home");
     setStatus("已清除 Key，语法按钮改用免费规则引擎");
   });
 
@@ -1123,6 +1135,7 @@
   window.addEventListener("DOMContentLoaded", () => {
     if (!pdfjsLib) { setStatus("PDF.js 加载失败，请检查网络"); }
     renderHistory();
+    showPage(location.hash.slice(1) || "home"); // 按 URL hash 还原上次所在模块
     tickTopbar();                 // 立即显示一次，不等 1 秒
     setInterval(tickTopbar, 1000); // 北京时间每秒刷新
   });

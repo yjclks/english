@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>英阅 · 英文阅读学习器</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css" />
-<link rel="stylesheet" href="styles.css?v=19" />
+<link rel="stylesheet" href="styles.css?v=21" />
 </head>
 <body>
 <header class="topbar">
@@ -16,22 +16,21 @@
       <span id="clockTime" class="clock-time">--:--:--</span>
     </div>
   </div>
+  <nav class="nav-tabs" id="navTabs" aria-label="模块导航">
+    <button type="button" class="nav-tab active" data-page="home">首页</button>
+    <button type="button" class="nav-tab" data-page="stats">学习记录</button>
+    <button type="button" class="nav-tab" data-page="settings">设置</button>
+  </nav>
   <div class="timer-box">
     <span class="timer-label">学习总时长</span>
     <span id="timerValue" class="timer-value">00:00:00</span>
     <button id="btnTimerMain" type="button" class="btn btn-timer">▶ 开始</button>
     <button id="btnTimerEnd" type="button" class="btn btn-timer-end hidden">结束</button>
   </div>
-  <div class="actions">
-    <button id="btnUpload" class="btn primary">上传 PDF</button>
-    <button id="btnFinishRead" class="btn" disabled>✓ 完成阅读</button>
-    <button id="btnTranslate" class="btn" disabled>翻译</button>
-    <button id="btnStats" class="btn ghost">📊 学习记录</button>
-    <button id="btnSettings" class="btn ghost">⚙ 设置</button>
-  </div>
 </header>
 
-<main class="layout">
+<!-- ========== 模块一：首页（PDF 阅读） ========== -->
+<main class="layout page" id="pageHome">
   <!-- 历史侧栏 -->
   <aside class="sidebar">
     <div class="sidebar-title">历史记录</div>
@@ -44,7 +43,7 @@
     <div id="dropZone" class="dropzone">
       <div class="dz-inner">
         <div class="dz-icon">⬆️</div>
-        <div>把 PDF 拖到这里，或点击右上角「上传 PDF」</div>
+        <div>把 PDF 拖到这里，或点击右侧栏「上传 PDF」</div>
         <div class="dz-sub">所有处理都在你的浏览器本地完成</div>
       </div>
       <input id="fileInput" type="file" accept="application/pdf" hidden />
@@ -53,8 +52,13 @@
     <div id="studyView" class="view hidden"></div>
   </section>
 
-  <!-- 释义面板：图例常驻 + 标签页（释义 / 翻译 / 语法） -->
+  <!-- 释义面板：操作按钮 + 提示 + 图例 + 标签页（释义 / 翻译 / 语法） -->
   <aside class="defpanel" id="defPanel">
+    <div class="panel-actions">
+      <button id="btnUpload" class="btn primary">上传 PDF</button>
+      <button id="btnFinishRead" class="btn" disabled>✓ 完成阅读</button>
+      <button id="btnTranslate" class="btn" disabled>翻译</button>
+    </div>
     <div id="panelToast" class="panel-toast hidden" role="status" aria-live="polite"></div>
     <div class="legend">
       <div class="legend-title">词表高亮（原页图片 + 文本层）</div>
@@ -76,7 +80,65 @@
   </aside>
 </main>
 
-<!-- 翻译弹层 -->
+<!-- ========== 模块二：学习记录 ========== -->
+<section class="standalone-page page hidden" id="pageStats">
+  <div class="stats-box page-card">
+    <h2 class="page-title">📊 学习记录</h2>
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-num" id="stTotalTime">00:00:00</div><div class="stat-label">总学习时长</div></div>
+      <div class="stat-card"><div class="stat-num" id="stWords">0</div><div class="stat-label">总阅读字数</div></div>
+      <div class="stat-card"><div class="stat-num" id="stDocs">0</div><div class="stat-label">阅读篇章数</div></div>
+      <div class="stat-card"><div class="stat-num" id="stDays">0</div><div class="stat-label">总学习天数</div></div>
+      <div class="stat-card"><div class="stat-num" id="stStreakCur">0</div><div class="stat-label">当前连续（天）</div></div>
+      <div class="stat-card"><div class="stat-num" id="stStreakMax">0</div><div class="stat-label">历史最长（天）</div></div>
+    </div>
+    <div class="chart-head">
+      <button id="chartPrev" class="btn" title="上个月">‹</button>
+      <span id="chartTitle" class="chart-title">—</span>
+      <button id="chartNext" class="btn" title="下个月">›</button>
+    </div>
+    <div id="chart" class="chart"></div>
+    <div class="chart-legend">每天学习时长（分钟）· 悬停柱子查看具体时长 · 统计以北京时间为准</div>
+  </div>
+</section>
+
+<!-- ========== 模块三：设置 ========== -->
+<section class="standalone-page page hidden" id="pageSettings">
+  <div class="settings-box page-card">
+    <h2 class="page-title">⚙ AI 语法讲解设置</h2>
+    <div class="set-row">
+      <label>服务商</label>
+      <select id="setProvider">
+        <option value="gemini">Gemini（Google，免费额度）</option>
+        <option value="groq">Groq（免费 Llama）</option>
+        <option value="openrouter">OpenRouter（含免费模型）</option>
+        <option value="custom">自定义（OpenAI 兼容）</option>
+      </select>
+    </div>
+    <div class="set-row">
+      <label>API 地址</label>
+      <input id="setBase" type="text" placeholder="https://.../v1" autocomplete="off" />
+    </div>
+    <div class="set-row">
+      <label>API Key</label>
+      <input id="setKey" type="password" placeholder="粘贴你的免费 Key" autocomplete="off" />
+    </div>
+    <div class="set-row">
+      <label>模型名</label>
+      <input id="setModel" type="text" placeholder="如 gemini-2.0-flash" autocomplete="off" />
+    </div>
+    <div class="set-hint">
+      配置仅保存在本浏览器（localStorage），不联网上传。未填 Key 时，「语法」按钮走免费规则引擎 LanguageTool。<br/>
+      免费 Key 获取：Gemini → aistudio.google.com；Groq → console.groq.com；OpenRouter → openrouter.ai（免费模型如 meta-llama/llama-3.1-8b-instruct:free）。
+    </div>
+    <div class="set-actions">
+      <button id="setClear" class="btn">清除（用回免费规则）</button>
+      <button id="setSave" class="btn primary">保存</button>
+    </div>
+  </div>
+</section>
+
+<!-- 全文翻译弹层（仅首页使用，保留弹层形式） -->
 <div id="translateModal" class="modal hidden">
   <div class="modal-box">
     <div class="modal-head">
@@ -84,74 +146,6 @@
       <button id="closeTranslate" class="x">✕</button>
     </div>
     <div id="translateBody" class="modal-body"></div>
-  </div>
-</div>
-
-<!-- 学习记录面板 -->
-<div id="statsModal" class="modal hidden">
-  <div class="modal-box stats-box">
-    <div class="modal-head">
-      <span>📊 学习记录</span>
-      <button id="closeStats" class="x">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="stat-cards">
-        <div class="stat-card"><div class="stat-num" id="stTotalTime">00:00:00</div><div class="stat-label">总学习时长</div></div>
-        <div class="stat-card"><div class="stat-num" id="stWords">0</div><div class="stat-label">总阅读字数</div></div>
-        <div class="stat-card"><div class="stat-num" id="stDocs">0</div><div class="stat-label">阅读篇章数</div></div>
-        <div class="stat-card"><div class="stat-num" id="stDays">0</div><div class="stat-label">总学习天数</div></div>
-        <div class="stat-card"><div class="stat-num" id="stStreakCur">0</div><div class="stat-label">当前连续（天）</div></div>
-        <div class="stat-card"><div class="stat-num" id="stStreakMax">0</div><div class="stat-label">历史最长（天）</div></div>
-      </div>
-      <div class="chart-head">
-        <button id="chartPrev" class="btn" title="上个月">‹</button>
-        <span id="chartTitle" class="chart-title">—</span>
-        <button id="chartNext" class="btn" title="下个月">›</button>
-      </div>
-      <div id="chart" class="chart"></div>
-      <div class="chart-legend">每天学习时长（分钟）· 悬停柱子查看具体时长 · 统计以北京时间为准</div>
-    </div>
-  </div>
-</div>
-
-<!-- AI 语法讲解设置面板 -->
-<div id="settingsModal" class="modal hidden">
-  <div class="modal-box" style="width:min(480px,92vw)">
-    <div class="modal-head">
-      <span>AI 语法讲解设置</span>
-      <button id="closeSettings" class="x">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="set-row">
-        <label>服务商</label>
-        <select id="setProvider">
-          <option value="gemini">Gemini（Google，免费额度）</option>
-          <option value="groq">Groq（免费 Llama）</option>
-          <option value="openrouter">OpenRouter（含免费模型）</option>
-          <option value="custom">自定义（OpenAI 兼容）</option>
-        </select>
-      </div>
-      <div class="set-row">
-        <label>API 地址</label>
-        <input id="setBase" type="text" placeholder="https://.../v1" autocomplete="off" />
-      </div>
-      <div class="set-row">
-        <label>API Key</label>
-        <input id="setKey" type="password" placeholder="粘贴你的免费 Key" autocomplete="off" />
-      </div>
-      <div class="set-row">
-        <label>模型名</label>
-        <input id="setModel" type="text" placeholder="如 gemini-2.0-flash" autocomplete="off" />
-      </div>
-      <div class="set-hint">
-        配置仅保存在本浏览器（localStorage），不联网上传。未填 Key 时，「语法」按钮走免费规则引擎 LanguageTool。<br/>
-        免费 Key 获取：Gemini → aistudio.google.com；Groq → console.groq.com；OpenRouter → openrouter.ai（免费模型如 meta-llama/llama-3.1-8b-instruct:free）。
-      </div>
-      <div class="set-actions">
-        <button id="setClear" class="btn">清除（用回免费规则）</button>
-        <button id="setSave" class="btn primary">保存</button>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -163,6 +157,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.js"></script>
 <script src="data/data.js"></script>
-<script src="app.js?v=19"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>
