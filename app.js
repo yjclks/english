@@ -889,6 +889,110 @@
   // 页面重新可见时立即校准（避免后台节流导致显示滞后）
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tickTopbar(); });
 
+  // ---------- 学习记录面板 ----------
+  const statsModal = $("statsModal");
+  const chartTitleEl = $("chartTitle"), chartEl = $("chart");
+  let chartYear = 0, chartMonth = 0; // 当前显示的年/月（1-12）
+
+  // 统计英文单词数（与高亮分词一致的口径：字母开头，可含 '’ - 连接）
+  function countWords(text) {
+    const m = String(text).match(/[A-Za-z][A-Za-z'’\-]*/g);
+    return m ? m.length : 0;
+  }
+  // 计算连续天数：返回 {current, longest}
+  // dailyMs: {"YYYY-MM-DD": 毫秒}
+  function computeStreaks(dailyMs) {
+    const active = Object.keys(dailyMs).filter((k) => dailyMs[k] > 0).sort();
+    if (!active.length) return { current: 0, longest: 0 };
+    // 历史最长：按日期顺序累加连续段
+    const DAY = 86400000;
+    const toTs = (k) => Date.parse(k + "T00:00:00Z");
+    let longest = 0, run = 0, prev = null;
+    for (const k of active) {
+      const ts = toTs(k);
+      if (prev !== null && ts - prev === DAY) run += 1;
+      else run = 1;
+      if (run > longest) longest = run;
+      prev = ts;
+    }
+    // 当前连续：从今天往前；今天没学则从昨天往前（今天未结束不算断签）
+    const set = new Set(active);
+    const dec = (k) => new Date(toTs(k) - DAY).toISOString().slice(0, 10);
+    let cursor = StudyStats.todayKey();
+    if (!set.has(cursor)) cursor = dec(cursor); // 回退到昨天
+    let current = 0;
+    while (set.has(cursor)) { current += 1; cursor = dec(cursor); }
+    return { current, longest };
+  }
+
+  async function openStats() {
+    statsModal.classList.remove("hidden");
+    await renderStats();
+  }
+  async function renderStats() {
+    // 阅读字数 / 篇章数：来自本机 IndexedDB 的文档
+    const docs = await getAllDocs();
+    let words = 0;
+    for (const d of docs) {
+      for (const pageText of (d.pages || [])) words += countWords(pageText);
+    }
+    $("stWords").textContent = words.toLocaleString("zh-CN");
+    $("stDocs").textContent = docs.length;
+
+    // 学习时长 / 天数 / 连续：来自 localStorage
+    const daily = StudyStats.getDailyMs();
+    $("stTotalTime").textContent = fmtDuration(StudyStats.totalMs());
+    const studyDays = Object.keys(daily).filter((k) => daily[k] > 0).length;
+    $("stDays").textContent = studyDays;
+    const sk = computeStreaks(daily);
+    $("stStreak").innerHTML = `${sk.current} <small>/ ${sk.longest}</small>`;
+
+    // 图表默认定位到最近有记录的月份（否则当前月）
+    if (!chartYear) {
+      const active = Object.keys(daily).filter((k) => daily[k] > 0).sort();
+      const anchor = active.length ? active[active.length - 1] : StudyStats.todayKey();
+      chartYear = +anchor.slice(0, 4);
+      chartMonth = +anchor.slice(5, 7);
+    }
+    renderChart();
+  }
+  function renderChart() {
+    chartTitleEl.textContent = `${chartYear}年${chartMonth}月`;
+    const daily = StudyStats.getDailyMs();
+    const prefix = `${chartYear}-${String(chartMonth).padStart(2, "0")}-`;
+    const daysInMonth = new Date(Date.UTC(chartYear, chartMonth, 0)).getUTCDate();
+    const vals = [];
+    let maxMs = 0;
+    for (let d = 1; d <= daysInMonth; d++) {
+      const ms = daily[prefix + String(d).padStart(2, "0")] || 0;
+      vals.push({ d, ms });
+      if (ms > maxMs) maxMs = ms;
+    }
+    chartEl.innerHTML = vals.map((v) => {
+      const has = v.ms > 0;
+      // 高度：按时长归一化，最少给 4px 让有记录的柱子可见
+      const h = has ? Math.max(4, Math.round((v.ms / maxMs) * 100)) : 0;
+      const mins = (v.ms / 60000);
+      const tip = has ? `${v.d}日 · ${fmtDuration(v.ms)}（${mins.toFixed(1)}分钟）` : `${v.d}日 · 未学习`;
+      const showDay = v.d === 1 || v.d % 5 === 0;
+      return `<div class="bar-col" title="${tip}">` +
+        `<div class="bar-tip">${tip}</div>` +
+        `<div class="bar${has ? "" : " zero"}" style="height:${h}%"></div>` +
+        `<div class="bar-day">${showDay ? v.d : ""}</div></div>`;
+    }).join("");
+  }
+  $("btnStats").addEventListener("click", openStats);
+  $("closeStats").addEventListener("click", () => statsModal.classList.add("hidden"));
+  statsModal.addEventListener("click", (e) => { if (e.target === statsModal) statsModal.classList.add("hidden"); });
+  $("chartPrev").addEventListener("click", () => {
+    chartMonth -= 1; if (chartMonth < 1) { chartMonth = 12; chartYear -= 1; }
+    renderChart();
+  });
+  $("chartNext").addEventListener("click", () => {
+    chartMonth += 1; if (chartMonth > 12) { chartMonth = 1; chartYear += 1; }
+    renderChart();
+  });
+
   // ---------- 事件绑定 ----------
   btnUpload.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
