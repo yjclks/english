@@ -1133,6 +1133,13 @@
 
   // ---------- 启动 ----------
   window.addEventListener("DOMContentLoaded", () => {
+    // 版本号从 app.js 自身的 ?v= 参数读取，与资源缓存键保持一致，避免两处手写不同步
+    const tag = $("versionTag");
+    if (tag) {
+      const self = document.querySelector('script[src*="app.js"]');
+      const m = self && self.src.match(/[?&]v=([^&]+)/);
+      tag.textContent = m ? "v" + decodeURIComponent(m[1]) : "";
+    }
     if (!pdfjsLib) { setStatus("PDF.js 加载失败，请检查网络"); }
     renderHistory();
     showPage(location.hash.slice(1) || "home"); // 按 URL hash 还原上次所在模块

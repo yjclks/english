@@ -152,7 +152,9 @@ canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-
   .bar-day{font-size:8px;}
 }
 
-.foot{padding:8px 18px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--panel);}
+.foot{padding:8px 18px;font-size:11px;color:var(--muted);border-top:1px solid var(--border);background:var(--panel);display:flex;align-items:center;gap:16px;}
+.foot-src{flex:1;min-width:0;}
+.version-tag{flex:none;font-variant-numeric:tabular-nums;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:2px 9px;white-space:nowrap;}
 
 /* 选中后悬浮工具栏（翻译 + 语法 两个按钮） */
 .sel-toolbar{
