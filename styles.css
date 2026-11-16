@@ -119,8 +119,8 @@ canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-
 .x{border:none;background:none;font-size:18px;cursor:pointer;color:var(--muted);}
 .modal-body{padding:16px;overflow-y:auto;line-height:1.9;font-size:15px;white-space:pre-wrap;}
 
-/* 学习记录面板 */
-.stats-box{width:min(860px,94vw);}
+/* 学习记录页面：卡片铺满内容区，图表占满剩余高度 */
+.stats-box{width:100%;height:100%;display:flex;flex-direction:column;}
 .settings-box{max-width:660px;}
 /* 统计内容已迁入独立页面，不再需要弹层的 pre-wrap 覆盖 */
 .stat-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:14px;}
@@ -133,10 +133,10 @@ canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-
 .chart-title{font-size:15px;font-weight:700;min-width:110px;text-align:center;}
 /* 图表：overflow 保持 visible，避免顶部悬浮的时长提示被裁剪；
    顶部预留 40px 给悬浮提示，柱子不再被提示框遮挡；
-   高度用 vh 弹性收缩，矮窗口下无需滚动即可看全 */
-.chart{height:clamp(180px,34vh,250px);display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--border);padding:40px 4px 0;}
+   作为弹性项占满页面卡片剩余高度，宽屏下柱子也相应变宽 */
+.chart{flex:1;min-height:180px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--border);padding:40px 4px 0;}
 .bar-col{flex:1;min-width:12px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;position:relative;}
-.bar{width:100%;max-width:26px;background:linear-gradient(180deg,#5b9bd5,#2f6fb0);border-radius:4px 4px 0 0;min-height:2px;transition:opacity .15s;}
+.bar{width:100%;max-width:40px;background:linear-gradient(180deg,#5b9bd5,#2f6fb0);border-radius:4px 4px 0 0;min-height:2px;transition:opacity .15s;}
 .bar.zero{background:#e3e6ea;}
 .bar:hover{opacity:.75;}
 .bar-day{font-size:9px;color:var(--muted);margin-top:5px;height:12px;white-space:nowrap;}
