@@ -28,7 +28,7 @@
   const historyEmpty = $("historyEmpty");
   const btnUpload = $("btnUpload");
   const btnTranslate = $("btnTranslate");
-  const statusEl = $("status");
+  const statusEl = $("panelToast"); // 状态提示移到右侧栏顶部，不占顶栏空间
   const translateModal = $("translateModal");
   const translateBody = $("translateBody");
   const closeTranslate = $("closeTranslate");
@@ -41,7 +41,10 @@
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
     );
   }
-  function setStatus(t) { statusEl.textContent = t || ""; }
+  function setStatus(t) {
+    statusEl.textContent = t || "";
+    statusEl.classList.toggle("hidden", !t); // 无提示时隐藏，不占右侧栏空间
+  }
   function fmtDate(iso) {
     const d = new Date(iso);
     const p = (n) => (n < 10 ? "0" + n : "" + n);

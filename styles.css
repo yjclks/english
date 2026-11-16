@@ -64,6 +64,8 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 
 canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-radius:6px;margin-bottom:14px;background:#fff;}
 
+/* 右侧栏顶部提示条（替代原顶栏状态文字，避免挤压顶栏按钮） */
+.panel-toast{background:#e8f3ea;border:1px solid #bfe0c6;border-left:4px solid #3f9d56;color:#256b38;border-radius:8px;padding:8px 10px;margin-bottom:12px;font-size:12.5px;line-height:1.5;word-break:break-word;}
 .defpanel{border-left:1px solid var(--border);background:var(--panel);overflow-y:auto;padding:14px;}
 /* 右侧面板标签页（释义 / 翻译 / 语法） */
 .panel-tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:12px;}

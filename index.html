@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>英阅 · 英文阅读学习器</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css" />
-<link rel="stylesheet" href="styles.css?v=18" />
+<link rel="stylesheet" href="styles.css?v=19" />
 </head>
 <body>
 <header class="topbar">
@@ -28,7 +28,6 @@
     <button id="btnTranslate" class="btn" disabled>翻译</button>
     <button id="btnStats" class="btn ghost">📊 学习记录</button>
     <button id="btnSettings" class="btn ghost">⚙ 设置</button>
-    <span id="status" class="status"></span>
   </div>
 </header>
 
@@ -56,6 +55,7 @@
 
   <!-- 释义面板：图例常驻 + 标签页（释义 / 翻译 / 语法） -->
   <aside class="defpanel" id="defPanel">
+    <div id="panelToast" class="panel-toast hidden" role="status" aria-live="polite"></div>
     <div class="legend">
       <div class="legend-title">词表高亮（原页图片 + 文本层）</div>
       <div class="legend-row"><span class="lg" style="background:var(--awl)"></span>雅思学术词（AWL）</div>
@@ -163,6 +163,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.js"></script>
 <script src="data/data.js"></script>
-<script src="app.js?v=18"></script>
+<script src="app.js?v=19"></script>
 </body>
 </html>
