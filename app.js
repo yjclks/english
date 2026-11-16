@@ -48,6 +48,88 @@
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
   }
 
+  // ---------- 学习数据层（localStorage，供计时器与记录面板共用）----------
+  // 数据结构：{ version, dailyMs: {"YYYY-MM-DD": 毫秒}, timer: {status, accumulatedMs, lastStartTs} }
+  // status: idle（未开始）/ running（计时中）/ paused（已暂停）
+  //   running 时本次会话时长 = accumulatedMs + (Date.now() - lastStartTs)
+  //   paused  时本次会话时长 = accumulatedMs
+  const StudyStats = (function () {
+    const KEY = "ielts_cet_study_v1";
+    function blank() {
+      return { version: 1, dailyMs: {}, timer: { status: "idle", accumulatedMs: 0, lastStartTs: 0 } };
+    }
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return blank();
+        const d = JSON.parse(raw);
+        if (!d || !d.dailyMs || !d.timer) return blank();
+        return d;
+      } catch (e) { return blank(); }
+    }
+    let data = load();
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {}
+    }
+    // 北京时间"日期键"（换电脑/换时区也按北京日期归档）
+    function bjParts(d) {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+      }).formatToParts(d);
+      const o = {};
+      parts.forEach((p) => { o[p.type] = p.value; });
+      if (o.hour === "24") o.hour = "00";
+      return o;
+    }
+    function todayKey() {
+      const p = bjParts(new Date());
+      return `${p.year}-${p.month}-${p.day}`;
+    }
+    // 本次会话已累计毫秒（running 含实时增量）
+    function sessionMs() {
+      const t = data.timer;
+      if (t.status === "running") return t.accumulatedMs + Math.max(0, Date.now() - t.lastStartTs);
+      if (t.status === "paused") return t.accumulatedMs;
+      return 0;
+    }
+    function totalMs() {
+      let sum = 0;
+      for (const k in data.dailyMs) sum += data.dailyMs[k] || 0;
+      return sum + sessionMs();
+    }
+    function start() {
+      if (data.timer.status !== "idle") return;
+      data.timer = { status: "running", accumulatedMs: 0, lastStartTs: Date.now() };
+      save();
+    }
+    function pause() {
+      if (data.timer.status !== "running") return;
+      data.timer.accumulatedMs = sessionMs();
+      data.timer.status = "paused";
+      save();
+    }
+    function resume() {
+      if (data.timer.status !== "paused") return;
+      data.timer.status = "running";
+      data.timer.lastStartTs = Date.now();
+      save();
+    }
+    function end() {
+      const ms = sessionMs();
+      if (ms > 0) {
+        const k = todayKey();
+        data.dailyMs[k] = (data.dailyMs[k] || 0) + ms;
+      }
+      data.timer = { status: "idle", accumulatedMs: 0, lastStartTs: 0 };
+      save();
+    }
+    // 供下一批记录面板使用
+    function getDailyMs() { return Object.assign({}, data.dailyMs); }
+    function getState() { return data.timer.status; }
+    return { start, pause, resume, end, sessionMs, totalMs, todayKey, bjParts, getDailyMs, getState };
+  })();
+
   // 词形还原（仅当还原后在词表中才采用，避免误判）
   function stemOf(w) {
     if (AWL_SET.has(w) || CET6_MAP.hasOwnProperty(w)) return w;
@@ -749,6 +831,64 @@
     selToolbar.classList.add("hidden");
   });
 
+  // ---------- 顶部：北京时间 + 学习计时器 UI ----------
+  const clockDateEl = $("clockDate"), clockTimeEl = $("clockTime");
+  const timerValueEl = $("timerValue"), timerBox = document.querySelector(".timer-box");
+  const btnTimerMain = $("btnTimerMain"), btnTimerEnd = $("btnTimerEnd");
+  const WEEK = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  function bjClockText() {
+    const p = StudyStats.bjParts(new Date());
+    // 用 UTC 正午计算星期，避免受本机时区影响（北京时间当天的星期始终正确）
+    const weekday = WEEK[new Date(Date.UTC(+p.year, +p.month - 1, +p.day, 12)).getUTCDay()];
+    return {
+      date: `${p.year}年${p.month}月${p.day}日 ${weekday}`,
+      time: `${p.hour}:${p.minute}:${p.second}`,
+    };
+  }
+  function fmtDuration(ms) {
+    const total = Math.floor(ms / 1000);
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    const p2 = (n) => (n < 10 ? "0" + n : "" + n);
+    return `${p2(h)}:${p2(m)}:${p2(s)}`;
+  }
+  function renderTimerUI() {
+    const st = StudyStats.getState();
+    timerValueEl.textContent = fmtDuration(StudyStats.totalMs());
+    timerBox.classList.toggle("running", st === "running");
+    if (st === "idle") {
+      btnTimerMain.textContent = "▶ 开始";
+      btnTimerEnd.classList.add("hidden");
+    } else if (st === "running") {
+      btnTimerMain.textContent = "⏸ 暂停";
+      btnTimerEnd.classList.remove("hidden");
+    } else {
+      btnTimerMain.textContent = "▶ 继续";
+      btnTimerEnd.classList.remove("hidden");
+    }
+  }
+  function tickTopbar() {
+    const c = bjClockText();
+    clockDateEl.textContent = c.date;
+    clockTimeEl.textContent = c.time;
+    renderTimerUI(); // 每秒刷新显示（running 时时长实时走动）
+  }
+  btnTimerMain.addEventListener("click", () => {
+    const st = StudyStats.getState();
+    if (st === "idle") StudyStats.start();
+    else if (st === "running") StudyStats.pause();
+    else if (st === "paused") StudyStats.resume();
+    renderTimerUI();
+  });
+  btnTimerEnd.addEventListener("click", () => {
+    StudyStats.end();
+    renderTimerUI();
+    setStatus("本次学习时长已记录");
+  });
+  // 页面重新可见时立即校准（避免后台节流导致显示滞后）
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) tickTopbar(); });
+
   // ---------- 事件绑定 ----------
   btnUpload.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", (e) => { if (e.target.files[0]) handleFile(e.target.files[0]); });
@@ -833,5 +973,7 @@
   window.addEventListener("DOMContentLoaded", () => {
     if (!pdfjsLib) { setStatus("PDF.js 加载失败，请检查网络"); }
     renderHistory();
+    tickTopbar();                 // 立即显示一次，不等 1 秒
+    setInterval(tickTopbar, 1000); // 北京时间每秒刷新
   });
 })();

@@ -5,11 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>雅思·六级 PDF 学习器</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css" />
-<link rel="stylesheet" href="styles.css?v=15" />
+<link rel="stylesheet" href="styles.css?v=16" />
 </head>
 <body>
 <header class="topbar">
   <div class="brand">📚 雅思·六级 PDF 学习器</div>
+  <div class="study-bar">
+    <div class="clock" title="实时北京时间">
+      <span id="clockDate" class="clock-date">—</span>
+      <span id="clockTime" class="clock-time">--:--:--</span>
+    </div>
+    <div class="timer-box">
+      <span class="timer-label">学习总时长</span>
+      <span id="timerValue" class="timer-value">00:00:00</span>
+      <button id="btnTimerMain" type="button" class="btn btn-timer">▶ 开始</button>
+      <button id="btnTimerEnd" type="button" class="btn btn-timer-end hidden">结束</button>
+    </div>
+  </div>
   <div class="actions">
     <button id="btnUpload" class="btn primary">上传 PDF</button>
     <button id="btnTranslate" class="btn" disabled>翻译全文</button>
@@ -122,6 +134,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.js"></script>
 <script src="data/data.js"></script>
-<script src="app.js?v=15"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>
