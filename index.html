@@ -3,28 +3,29 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>雅思·六级 PDF 学习器</title>
+<title>英阅 · 英文阅读学习器</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css" />
-<link rel="stylesheet" href="styles.css?v=17" />
+<link rel="stylesheet" href="styles.css?v=18" />
 </head>
 <body>
 <header class="topbar">
-  <div class="brand">📚 雅思·六级 PDF 学习器</div>
-  <div class="study-bar">
+  <div class="topbar-left">
+    <div class="brand">📖 英阅</div>
     <div class="clock" title="实时北京时间">
       <span id="clockDate" class="clock-date">—</span>
       <span id="clockTime" class="clock-time">--:--:--</span>
     </div>
-    <div class="timer-box">
-      <span class="timer-label">学习总时长</span>
-      <span id="timerValue" class="timer-value">00:00:00</span>
-      <button id="btnTimerMain" type="button" class="btn btn-timer">▶ 开始</button>
-      <button id="btnTimerEnd" type="button" class="btn btn-timer-end hidden">结束</button>
-    </div>
+  </div>
+  <div class="timer-box">
+    <span class="timer-label">学习总时长</span>
+    <span id="timerValue" class="timer-value">00:00:00</span>
+    <button id="btnTimerMain" type="button" class="btn btn-timer">▶ 开始</button>
+    <button id="btnTimerEnd" type="button" class="btn btn-timer-end hidden">结束</button>
   </div>
   <div class="actions">
     <button id="btnUpload" class="btn primary">上传 PDF</button>
-    <button id="btnTranslate" class="btn" disabled>翻译全文</button>
+    <button id="btnFinishRead" class="btn" disabled>✓ 完成阅读</button>
+    <button id="btnTranslate" class="btn" disabled>翻译</button>
     <button id="btnStats" class="btn ghost">📊 学习记录</button>
     <button id="btnSettings" class="btn ghost">⚙ 设置</button>
     <span id="status" class="status"></span>
@@ -99,7 +100,8 @@
         <div class="stat-card"><div class="stat-num" id="stWords">0</div><div class="stat-label">总阅读字数</div></div>
         <div class="stat-card"><div class="stat-num" id="stDocs">0</div><div class="stat-label">阅读篇章数</div></div>
         <div class="stat-card"><div class="stat-num" id="stDays">0</div><div class="stat-label">总学习天数</div></div>
-        <div class="stat-card"><div class="stat-num" id="stStreak">0 <small>/ 0</small></div><div class="stat-label">连续 / 最长(天)</div></div>
+        <div class="stat-card"><div class="stat-num" id="stStreakCur">0</div><div class="stat-label">当前连续（天）</div></div>
+        <div class="stat-card"><div class="stat-num" id="stStreakMax">0</div><div class="stat-label">历史最长（天）</div></div>
       </div>
       <div class="chart-head">
         <button id="chartPrev" class="btn" title="上个月">‹</button>
@@ -161,6 +163,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.js"></script>
 <script src="data/data.js"></script>
-<script src="app.js?v=17"></script>
+<script src="app.js?v=18"></script>
 </body>
 </html>

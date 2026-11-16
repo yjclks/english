@@ -33,7 +33,7 @@
   const translateBody = $("translateBody");
   const closeTranslate = $("closeTranslate");
 
-  const state = { pages: [], fileName: "", blob: null };
+  const state = { pages: [], fileName: "", blob: null, docId: null };
 
   // ---------- 工具 ----------
   function escapeHtml(s) {
@@ -49,14 +49,21 @@
   }
 
   // ---------- 学习数据层（localStorage，供计时器与记录面板共用）----------
-  // 数据结构：{ version, dailyMs: {"YYYY-MM-DD": 毫秒}, timer: {status, accumulatedMs, lastStartTs} }
+  // 数据结构：{ version, dailyMs: {"YYYY-MM-DD": 毫秒},
+  //            timer: {status, accumulatedMs, lastStartTs},
+  //            read: {words, docs, counted: [文档id]} }
   // status: idle（未开始）/ running（计时中）/ paused（已暂停）
   //   running 时本次会话时长 = accumulatedMs + (Date.now() - lastStartTs)
   //   paused  时本次会话时长 = accumulatedMs
   const StudyStats = (function () {
     const KEY = "ielts_cet_study_v1";
     function blank() {
-      return { version: 1, dailyMs: {}, timer: { status: "idle", accumulatedMs: 0, lastStartTs: 0 } };
+      return {
+        version: 1,
+        dailyMs: {},
+        timer: { status: "idle", accumulatedMs: 0, lastStartTs: 0 },
+        read: { words: 0, docs: 0, counted: [] },
+      };
     }
     function load() {
       try {
@@ -64,6 +71,11 @@
         if (!raw) return blank();
         const d = JSON.parse(raw);
         if (!d || !d.dailyMs || !d.timer) return blank();
+        // 旧版本数据迁移：补齐 read 字段
+        if (!d.read || typeof d.read.words !== "number") {
+          d.read = { words: 0, docs: 0, counted: [] };
+        }
+        if (!Array.isArray(d.read.counted)) d.read.counted = [];
         return d;
       } catch (e) { return blank(); }
     }
@@ -124,10 +136,22 @@
       data.timer = { status: "idle", accumulatedMs: 0, lastStartTs: 0 };
       save();
     }
-    // 供下一批记录面板使用
+    // 供记录面板使用
     function getDailyMs() { return Object.assign({}, data.dailyMs); }
     function getState() { return data.timer.status; }
-    return { start, pause, resume, end, sessionMs, totalMs, todayKey, bjParts, getDailyMs, getState };
+    // 阅读统计：仅当用户点「完成阅读」时计入
+    function getRead() { return { words: data.read.words, docs: data.read.docs }; }
+    function hasCounted(key) { return data.read.counted.includes(key); }
+    // key 为文档 id（无 id 时用文件名兜底）。重复计入返回 null。
+    function finishRead(words, key) {
+      if (hasCounted(key)) return null;
+      data.read.words += words;
+      data.read.docs += 1;
+      data.read.counted.push(key);
+      save();
+      return { words: data.read.words, docs: data.read.docs };
+    }
+    return { start, pause, resume, end, sessionMs, totalMs, todayKey, bjParts, getDailyMs, getState, getRead, hasCounted, finishRead };
   })();
 
   // 词形还原（仅当还原后在词表中才采用，避免误判）
@@ -557,9 +581,11 @@
     state.pages = d.pages || [];
     state.fileName = d.name;
     state.blob = d.blob;
+    state.docId = d.id || d.name;
     dropZone.classList.add("hidden");
     btnTranslate.disabled = !state.pages.length;
     setStatus("共 " + state.pages.length + " 页");
+    updateFinishBtn();
     renderStudyView();
   }
 
@@ -580,8 +606,11 @@
       btnTranslate.disabled = false;
       renderStudyView();
       setStatus("共 " + pages.length + " 页");
+      const docId = Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+      state.docId = docId;
+      updateFinishBtn();
       await saveDoc({
-        id: Date.now() + "-" + Math.random().toString(36).slice(2, 7),
+        id: docId,
         name: file.name, size: file.size, date: new Date().toISOString(),
         blob: file, pages,
       });
@@ -889,6 +918,23 @@
   // 页面重新可见时立即校准（避免后台节流导致显示滞后）
   document.addEventListener("visibilitychange", () => { if (!document.hidden) tickTopbar(); });
 
+  // ---------- 「完成阅读」：读完一篇文章后手动计入阅读统计 ----------
+  const btnFinishRead = $("btnFinishRead");
+  function updateFinishBtn() {
+    const hasDoc = state.pages.length > 0;
+    const counted = state.docId && StudyStats.hasCounted(state.docId);
+    btnFinishRead.disabled = !hasDoc || !!counted;
+    btnFinishRead.textContent = counted ? "✓ 已计入" : "✓ 完成阅读";
+  }
+  btnFinishRead.addEventListener("click", () => {
+    if (!state.pages.length) return;
+    const words = countWords(state.pages.join("\n\n"));
+    const r = StudyStats.finishRead(words, state.docId);
+    if (!r) { setStatus("本文档已计入过阅读统计"); }
+    else { setStatus(`已计入阅读统计：+${words.toLocaleString("zh-CN")} 词 · 篇章 +1`); }
+    updateFinishBtn();
+  });
+
   // ---------- 学习记录面板 ----------
   const statsModal = $("statsModal");
   const chartTitleEl = $("chartTitle"), chartEl = $("chart");
@@ -930,14 +976,10 @@
     await renderStats();
   }
   async function renderStats() {
-    // 阅读字数 / 篇章数：来自本机 IndexedDB 的文档
-    const docs = await getAllDocs();
-    let words = 0;
-    for (const d of docs) {
-      for (const pageText of (d.pages || [])) words += countWords(pageText);
-    }
-    $("stWords").textContent = words.toLocaleString("zh-CN");
-    $("stDocs").textContent = docs.length;
+    // 阅读字数 / 篇章数：仅统计用户点过「完成阅读」的文档
+    const read = StudyStats.getRead();
+    $("stWords").textContent = read.words.toLocaleString("zh-CN");
+    $("stDocs").textContent = read.docs;
 
     // 学习时长 / 天数 / 连续：来自 localStorage
     const daily = StudyStats.getDailyMs();
@@ -945,7 +987,8 @@
     const studyDays = Object.keys(daily).filter((k) => daily[k] > 0).length;
     $("stDays").textContent = studyDays;
     const sk = computeStreaks(daily);
-    $("stStreak").innerHTML = `${sk.current} <small>/ ${sk.longest}</small>`;
+    $("stStreakCur").textContent = sk.current;
+    $("stStreakMax").textContent = sk.longest;
 
     // 图表默认定位到最近有记录的月份（否则当前月）
     if (!chartYear) {
