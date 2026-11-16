@@ -26,27 +26,45 @@ PDF 不上传服务器（存于本机浏览器 IndexedDB）。因此可以部署
 
 ## 二、方案 A：GitHub Pages（需 GitHub 账号，免费，无需服务器）
 
-> ⚠️ 本方案**必须拥有 GitHub 账号**。若你没有 GitHub 账号，请直接看方案 B / B2 / D。
-
 适合：想拿到一个 `https://用户名.github.io/仓库名/` 的公网链接，随时用任意设备打开。
 
-### 1. 把本目录推送到 GitHub
+### 0. 注册 GitHub 账户（没有账号时）
+1. 打开 https://github.com/signup
+2. 填写邮箱、密码、**用户名**（用户名会出现在你的网址里，如 `zhangsan.github.io`，建议用英文/拼音）
+3. 完成验证 → **Create account**
+4. 去注册邮箱点验证链接激活账户
+5. 选免费计划（Free）即可，**无需绑定信用卡**
+
+### 1. 新建仓库
+- 登录后点右上角 **+ → New repository**
+- 仓库名随意（如 `ielts-cet`），**可见性选 Public**（免费账户只有 Public 能开 Pages）
+- **不要**勾选 “Add a README / .gitignore / license”（我们本地已有文件）
+- 点 **Create repository**
+
+### 2. 把本目录推送到 GitHub
 ```bash
-# 在 ielts-cet-site 目录内（已 git init 并提交了初始版本）
+# 在 ielts-cet-site 目录内（已 git init 并提交了全部版本）
 git remote add origin https://github.com/你的用户名/你的仓库名.git
 git branch -M main
 git push -u origin main
 ```
-> 若还没建仓库：去 github.com → New repository → 仓库名随意（如 `ielts-cet`）→ 不要勾选
-> “Add a README”（我们已有文件）→ Create repository，然后执行上面三条命令。
 
-### 2. 开启 Pages
+> **push 时需要认证**：GitHub 已不允许用账户密码推送，需用以下任一方式：
+> - **图形界面（最省事，推荐新手）**：安装 [GitHub Desktop](https://desktop.github.com/) → 登录 →
+>   File → Add Local Repository → 选中 `ielts-cet-site` 文件夹 → 点 **Publish repository**，
+>   按提示选 Public 即可，全程不用管 token。
+> - **命令行 + Token**：GitHub 头像 → Settings → Developer settings → Personal access tokens →
+>   Tokens (classic) → Generate new token → 勾选 `repo` 权限 → 生成后复制那串 token；
+>   在 `git push` 提示输入密码时**粘贴 token**（不是账户密码）。
+>   Mac 上可先执行一次 `git config --global credential.helper osxkeychain`，让系统记住凭据。
+
+### 3. 开启 Pages
 - 进入仓库 → **Settings → Pages**（左侧栏）
 - **Source** 选 `Deploy from a branch`
 - **Branch** 选 `main`，目录选 `/ (root)`
 - 保存后等待约 1 分钟，访问 `https://用户名.github.io/仓库名/` 即可。
 
-### 3. 关于私有仓库
+### 4. 关于私有仓库
 GitHub 免费版对**私有仓库**开启 Pages 需要付费计划。若希望免费且不怕公开，
 把仓库设为 **Public** 即可。介意公开的同学可用方案 B（Netlify / Vercel 支持私有仓库免费托管）。
 
