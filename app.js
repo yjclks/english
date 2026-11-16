@@ -563,10 +563,12 @@
     historyList.innerHTML = "";
     historyEmpty.style.display = docs.length ? "none" : "block";
     for (const d of docs) {
+      const isRead = StudyStats.hasCounted(d.id);
       const li = document.createElement("li");
-      li.className = "history-item";
+      li.className = "history-item" + (isRead ? " read" : "");
       li.innerHTML =
-        `<div class="h-name">${escapeHtml(d.name)}</div>` +
+        `<div class="h-name"><span class="h-fname">${escapeHtml(d.name)}</span>` +
+        (isRead ? `<span class="h-read">✓ 已读</span>` : ``) + `</div>` +
         `<div class="h-meta"><span>${fmtDate(d.date)} · ${fmtSize(d.size || 0)}</span>` +
         `<span class="h-del" data-del="${d.id}">删除</span></div>`;
       li.addEventListener("click", (e) => {
@@ -936,6 +938,7 @@
     if (!r) { setStatus("本文档已计入过阅读统计"); }
     else { setStatus(`已计入阅读统计：+${words.toLocaleString("zh-CN")} 词 · 篇章 +1`); }
     updateFinishBtn();
+    renderHistory(); // 刷新历史列表，让「已读」标记即时出现
   });
 
   // ---------- 模块导航（首页 / 学习记录 / 设置） ----------
