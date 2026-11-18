@@ -944,7 +944,7 @@
     renderHistory(); // 刷新历史列表，让「已读」标记即时出现
   });
 
-  // ---------- 左右侧栏折叠（状态存本机） ----------
+  // ---------- 左右侧栏折叠（刷新后总是默认展开，不持久化） ----------
   // 让 PDF 按当前正文宽度重新排版。
   // pdf.js 3.11 的 currentScaleValue = 同值 不会触发重绘；page-width 需要先切到别的值再切回。
   function reflowPdf() {
@@ -956,15 +956,11 @@
       });
     } catch (e) {}
   }
-  const FOLD_KEY = "ielts_cet_fold_v1";
   const foldLayout = document.querySelector(".layout");
   const sidebarEl = $("sidebar"), defPanelEl = $("defPanel");
   const foldLeftBtn = $("foldLeft"), foldRightBtn = $("foldRight");
-  function loadFold() {
-    try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || { left: false, right: false }; }
-    catch (e) { return { left: false, right: false }; }
-  }
-  let foldState = loadFold();
+  let foldState = { left: false, right: false }; // 每次加载都从展开开始
+  try { localStorage.removeItem("ielts_cet_fold_v1"); } catch (e) {} // 清除旧版本持久化的状态
   function applyFold() {
     foldLayout.classList.toggle("left-collapsed", !!foldState.left);
     foldLayout.classList.toggle("right-collapsed", !!foldState.right);
@@ -976,7 +972,6 @@
   }
   function toggleFold(side) {
     foldState[side] = !foldState[side];
-    try { localStorage.setItem(FOLD_KEY, JSON.stringify(foldState)); } catch (e) {}
     applyFold();
   }
   foldLeftBtn.addEventListener("click", () => toggleFold("left"));
