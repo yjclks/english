@@ -131,7 +131,8 @@ canvas.page-canvas{width:100%;height:auto;border:1px solid var(--border);border-
 .legend-hint{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.6;}
 .def-note{font-size:11.5px;color:var(--muted);margin-top:6px;}
 .def-empty{font-size:13px;color:var(--muted);line-height:1.8;}
-.tag{display:inline-block;width:16px;text-align:center;border-radius:4px;color:#fff;font-size:11px;padding:1px 4px;}
+/* 词表标签：横向自适应宽度，文字不换行不截断 */
+.tag{display:inline-block;text-align:center;border-radius:5px;color:#fff;font-size:11.5px;font-weight:600;line-height:1.5;padding:2px 9px;margin-right:6px;white-space:nowrap;}
 .tag-awl{background:var(--awl);} .tag-cet6{background:var(--cet6);} .tag-both{background:var(--both);}
 .def-word{font-size:22px;font-weight:700;margin-bottom:4px;}
 .def-tags{margin:6px 0 10px;}
