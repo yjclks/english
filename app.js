@@ -941,6 +941,36 @@
     renderHistory(); // 刷新历史列表，让「已读」标记即时出现
   });
 
+  // ---------- 左右侧栏折叠（状态存本机） ----------
+  const FOLD_KEY = "ielts_cet_fold_v1";
+  const foldLayout = document.querySelector(".layout");
+  const sidebarEl = $("sidebar"), defPanelEl = $("defPanel");
+  const foldLeftBtn = $("foldLeft"), foldRightBtn = $("foldRight");
+  function loadFold() {
+    try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || { left: false, right: false }; }
+    catch (e) { return { left: false, right: false }; }
+  }
+  let foldState = loadFold();
+  function applyFold() {
+    foldLayout.classList.toggle("left-collapsed", !!foldState.left);
+    foldLayout.classList.toggle("right-collapsed", !!foldState.right);
+    sidebarEl.classList.toggle("collapsed", !!foldState.left);
+    defPanelEl.classList.toggle("collapsed", !!foldState.right);
+    foldLeftBtn.textContent = foldState.left ? "»" : "«";
+    foldRightBtn.textContent = foldState.right ? "«" : "»";
+    // 折叠改变正文宽度后，让 PDF 重新按宽度排版
+    if (pdfViewer) {
+      try { pdfViewer.currentScaleValue = pdfViewer.currentScaleValue; } catch (e) {}
+    }
+  }
+  function toggleFold(side) {
+    foldState[side] = !foldState[side];
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(foldState)); } catch (e) {}
+    applyFold();
+  }
+  foldLeftBtn.addEventListener("click", () => toggleFold("left"));
+  foldRightBtn.addEventListener("click", () => toggleFold("right"));
+
   // ---------- 模块导航（首页 / 学习记录 / 设置） ----------
   const PAGE_IDS = { home: "pageHome", stats: "pageStats", settings: "pageSettings" };
   function showPage(name) {
@@ -1145,6 +1175,7 @@
     }
     if (!pdfjsLib) { setStatus("PDF.js 加载失败，请检查网络"); }
     renderHistory();
+    applyFold(); // 还原左右栏折叠状态
     showPage(location.hash.slice(1) || "home"); // 按 URL hash 还原上次所在模块
     tickTopbar();                 // 立即显示一次，不等 1 秒
     setInterval(tickTopbar, 1000); // 北京时间每秒刷新

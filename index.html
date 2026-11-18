@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>英阅 · 英文阅读学习器</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.css" />
-<link rel="stylesheet" href="styles.css?v=25" />
+<link rel="stylesheet" href="styles.css?v=26" />
 </head>
 <body>
 <header class="topbar">
@@ -32,7 +32,8 @@
 <!-- ========== 模块一：首页（PDF 阅读） ========== -->
 <main class="layout page" id="pageHome">
   <!-- 历史侧栏 -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
+    <button type="button" id="foldLeft" class="fold-btn" title="收起/展开历史栏">«</button>
     <div class="sidebar-title">历史记录</div>
     <ul id="historyList" class="history-list"></ul>
     <div id="historyEmpty" class="hint">暂无上传记录。<br/>上传的 PDF 会保存在本机浏览器（IndexedDB），不联网、不上传服务器。</div>
@@ -54,6 +55,7 @@
 
   <!-- 释义面板：操作按钮 + 提示 + 图例 + 标签页（释义 / 翻译 / 语法） -->
   <aside class="defpanel" id="defPanel">
+    <button type="button" id="foldRight" class="fold-btn" title="收起/展开释义栏">»</button>
     <div class="panel-actions">
       <button id="btnUpload" class="btn primary">上传 PDF</button>
       <button id="btnFinishRead" class="btn" disabled>✓ 完成阅读</button>
@@ -159,6 +161,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.js"></script>
 <script src="data/data.js"></script>
-<script src="app.js?v=25"></script>
+<script src="app.js?v=26"></script>
 </body>
 </html>
