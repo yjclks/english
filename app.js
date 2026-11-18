@@ -246,7 +246,10 @@
 
   // 在 pdf.js 文本层的 span 内，给每个单词包一层高亮/可点击 span（不改变文本与定位）
   function highlightSpan(span) {
-    if (span.querySelector(".word")) return; // 已处理过，避免重复包裹
+    // 跳过自身就是 .word 的（重排后遍历会再次拿到已生成的词 span），
+    // 以及内部已含 .word 的（外层 span 已处理过），避免层层嵌套导致高亮越叠越深
+    if (span.classList && span.classList.contains("word")) return;
+    if (span.querySelector(".word")) return;
     const text = span.textContent;
     if (!/[A-Za-z]/.test(text)) return;
     const re = /([A-Za-z][A-Za-z'’\-]*)/g;
@@ -942,6 +945,17 @@
   });
 
   // ---------- 左右侧栏折叠（状态存本机） ----------
+  // 让 PDF 按当前正文宽度重新排版。
+  // pdf.js 3.11 的 currentScaleValue = 同值 不会触发重绘；page-width 需要先切到别的值再切回。
+  function reflowPdf() {
+    if (!pdfViewer || !state.pdfDoc) return;
+    try {
+      pdfViewer.currentScaleValue = "page-fit";
+      requestAnimationFrame(() => {
+        try { pdfViewer.currentScaleValue = "page-width"; } catch (e) {}
+      });
+    } catch (e) {}
+  }
   const FOLD_KEY = "ielts_cet_fold_v1";
   const foldLayout = document.querySelector(".layout");
   const sidebarEl = $("sidebar"), defPanelEl = $("defPanel");
@@ -958,10 +972,7 @@
     defPanelEl.classList.toggle("collapsed", !!foldState.right);
     foldLeftBtn.textContent = foldState.left ? "»" : "«";
     foldRightBtn.textContent = foldState.right ? "«" : "»";
-    // 折叠改变正文宽度后，让 PDF 重新按宽度排版
-    if (pdfViewer) {
-      try { pdfViewer.currentScaleValue = pdfViewer.currentScaleValue; } catch (e) {}
-    }
+    reflowPdf();
   }
   function toggleFold(side) {
     foldState[side] = !foldState[side];
@@ -982,13 +993,8 @@
     if (name === "settings") fillSettingsForm();
     // hash 先更新，避免后续任何异常影响 URL 与页面不同步
     if (location.hash.slice(1) !== name) history.replaceState(null, "", "#" + name);
-    // 首页曾被隐藏，切回时强制 PDFViewer 重算尺寸（3.11 无 resize()，用 scale setter 触发）
-    if (name === "home" && pdfViewer) {
-      try {
-        if (typeof pdfViewer.resize === "function") pdfViewer.resize();
-        else pdfViewer.currentScaleValue = pdfViewer.currentScaleValue;
-      } catch (e) { /* 尺寸重算失败不影响页面切换 */ }
-    }
+    // 首页曾被隐藏，切回时让 PDF 按当前宽度重排
+    if (name === "home") reflowPdf();
   }
   $("navTabs").addEventListener("click", (e) => {
     const tab = e.target.closest(".nav-tab");
