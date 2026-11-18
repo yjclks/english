@@ -54,16 +54,22 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang 
 .page-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px 26px;box-shadow:0 1px 3px rgba(0,0,0,.04);line-height:1.6;white-space:normal;}
 .page-title{font-size:19px;margin:0 0 20px;font-weight:800;}
 
-.layout{--lw:240px;--rw:320px;display:grid;grid-template-columns:var(--lw) 1fr var(--rw);gap:0;height:calc(100vh - 110px);}
+.layout{--lw:240px;--rw:320px;position:relative;display:grid;grid-template-columns:var(--lw) 1fr var(--rw);gap:0;height:calc(100vh - 110px);}
 /* 折叠：收窄到只剩一个把手的宽度 */
 .layout.left-collapsed{--lw:34px;}
 .layout.right-collapsed{--rw:34px;}
 .sidebar.collapsed>.sidebar-title,.sidebar.collapsed>.history-list,.sidebar.collapsed>.hint{display:none;}
 .defpanel.collapsed>*:not(.fold-btn){display:none;}
-/* 折叠按钮 */
-.fold-btn{display:block;width:100%;border:none;background:transparent;color:var(--muted);font-size:15px;cursor:pointer;padding:2px 0 8px;line-height:1;}
-.fold-btn:hover{color:var(--primary);}
-.sidebar.collapsed .fold-btn,.defpanel.collapsed .fold-btn{padding:6px 0;text-align:center;}
+/* 折叠按钮：左栏放右下角、右栏放左下角，位置随栏宽（含折叠）自动调整 */
+.fold-btn{position:absolute;bottom:10px;z-index:6;width:28px;height:28px;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:7px;cursor:pointer;font-size:14px;line-height:1;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.fold-btn:hover{color:var(--primary);border-color:var(--primary);}
+#foldLeft{left:calc(var(--lw) - 38px);}
+#foldRight{right:calc(var(--rw) - 38px);}
+/* 折叠成 34px 把手时，公式会算出负值，改为在把手内居中 */
+.layout.left-collapsed #foldLeft{left:3px;}
+.layout.right-collapsed #foldRight{right:3px;}
+.layout.left-collapsed .sidebar{border-right:none;}
+.layout.right-collapsed .defpanel{border-left:none;}
 /* 平板（含横屏）：自动收窄左右栏，给正文更多空间 */
 @media (max-width:1280px){
   .layout{--lw:180px;--rw:250px;}
